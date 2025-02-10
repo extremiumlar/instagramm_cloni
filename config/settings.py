@@ -43,10 +43,12 @@ INSTALLED_APPS = [
 
     #packeges
     'rest_framework',
+    'rest_framework_simplejwt',
     
     #local apps
     'users',
     'shared',
+
 ]
 
 MIDDLEWARE = [
