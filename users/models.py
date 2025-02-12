@@ -31,8 +31,8 @@ class User(AbstractUser,BaseModel):
     )
 
     user_roles = models.CharField(max_length=31, choices=USER_ROLES , default=ORDINARY_USER)
-    AUTH_TYPE = models.CharField(max_length=31, choices=AUTH_TYPE_CHOICES)
-    AUTH_STATUS = models.CharField(max_length=31, choices=AUTH_STATUS, default=NEW)
+    auth_type = models.CharField(max_length=31, choices=AUTH_TYPE_CHOICES)
+    auth_status = models.CharField(max_length=31, choices=AUTH_STATUS, default=NEW)
     email = models.EmailField(null=True, blank=True, unique=True)
     phone_number = models.CharField(max_length=13, null=True, blank=True, unique=True)
     photo = models.ImageField(null=True, blank=True, upload_to='user_photos',
