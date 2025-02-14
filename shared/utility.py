@@ -1,5 +1,8 @@
 import re
+import threading
 
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from rest_framework.exceptions import ValidationError
 
 # email to'g'ri kiritilganini tekshirish uchun regax
@@ -22,3 +25,46 @@ def check_email_or_phone(email_or_phone):
         raise ValidationError(data)
 
     return email_or_phone
+
+class EmailThread(threading.Thread):
+    # EmailThread - emailga xabar jo'natishda ketma-ket emas birdaniga xabar jo'natadi
+    # aytaylik 1000 ta foydalanuvchi bir vaqtda ro'yxatdan o'tsa 1-foydalanuvchiga birinchi keyin 2 chisiga
+    # keyin 3 chisiga qilmasdan hammasiga bir vaqtda kode jo'natadi
+    # ya'ni asosiy dasturni to'xtatmasdan o'zi ham unga paralel ishlovradi
+    def __init__(self, email):
+        # emailni belgilab qo'yish uchun
+        self.email = email
+        threading.Thread.__init__(self)
+    def run(self):
+        self.email.send()
+
+class Email:
+    # EmailThreadni ishlatish va unga emailni jo'natish uchun ishlatiladi
+    @staticmethod
+    def send_email(data):
+        email = EmailMessage(
+            subject=data["subject"],
+            body=data["body"],
+            to=[data["to_email"]],
+        )
+        if data.get('content_type')=='html':
+            email.content_subtype = 'html'
+        EmailThread(email).start()
+
+
+def send_mail(email, code):
+    # render to string orqali activate_account.html fayliga codeni qo'shib html_contentga o'girib beryapti
+    html_content = render_to_string(
+        'email/authentication/activate_account.html',
+        {"code": code},
+    )
+
+    # Email classi ichidagi send_email funksiyasiga data yuborish uchun ishlatidi
+    Email.send_email(
+        {
+            "subject": "Ro'yxatdan o'tish",
+            "to_email": email,
+            "body": html_content,
+            "content_type": "html",
+        }
+    )

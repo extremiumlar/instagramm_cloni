@@ -1,7 +1,7 @@
 import hashlib
 import uuid
 from datetime import datetime, timedelta
-from random import random
+import random
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
@@ -73,7 +73,7 @@ class User(AbstractUser,BaseModel):
         if self.email:
             normal_email = self.email.lower()
             self.email = normal_email
-    def check_password(self):
+    def check_pass(self):
         # huddi boyagi kabi agar password bo'lmasa random hosil qilish uchun
         if not self.password:
             temp_password = f"password-{uuid.uuid4().__str__().split("-")[-1]}"
@@ -91,13 +91,12 @@ class User(AbstractUser,BaseModel):
         }
     def clean(self):
         self.check_username()
-        self.check_password()
+        self.check_pass()
         self.check_email()
         self.hashing_password()
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.clean()
+        self.clean()
         super(User,self).save(*args, **kwargs)
 
 
