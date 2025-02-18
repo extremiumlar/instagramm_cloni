@@ -1,5 +1,6 @@
 import re
 import threading
+import phonenumbers
 
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
@@ -9,13 +10,14 @@ from rest_framework.exceptions import ValidationError
 email_regax = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 # telefon raqam to'g'ri kiritilganini tekshirish uchun regax
-phone_regax = re.compile(r"^[0-9]{3}-[0-9]{3}-[0-9]{4}$")
+phone_regax = re.compile(r"(\+[0-9]+\s*)?(\([0-9]+\))?[\s0-9\-]+[0-9]+")
 
 #email yoki phone_number ekanligini tekshirish uchun funksiya
 def check_email_or_phone(email_or_phone):
+    phone_number = phonenumbers.parse(email_or_phone)
     if re.fullmatch(email_regax, email_or_phone):
         email_or_phone = "email"
-    elif re.fullmatch(phone_regax, email_or_phone):
+    elif phonenumbers.is_valid_number(phone_number):
         email_or_phone = "phone"
     else:
         data = {
@@ -26,20 +28,20 @@ def check_email_or_phone(email_or_phone):
 
     return email_or_phone
 
+
 class EmailThread(threading.Thread):
-    # EmailThread - emailga xabar jo'natishda ketma-ket emas birdaniga xabar jo'natadi
     # aytaylik 1000 ta foydalanuvchi bir vaqtda ro'yxatdan o'tsa 1-foydalanuvchiga birinchi keyin 2 chisiga
     # keyin 3 chisiga qilmasdan hammasiga bir vaqtda kode jo'natadi
     # ya'ni asosiy dasturni to'xtatmasdan o'zi ham unga paralel ishlovradi
     def __init__(self, email):
-        # emailni belgilab qo'yish uchun
+        # emailni registratsiya qilish uchun
         self.email = email
         threading.Thread.__init__(self)
     def run(self):
         self.email.send()
 
 class Email:
-    # EmailThreadni ishlatish va unga emailni jo'natish uchun ishlatiladi
+    # EmailThreadni ishlatish va emailni jo'natish uchun ishlatiladi
     @staticmethod
     def send_email(data):
         email = EmailMessage(
@@ -52,6 +54,7 @@ class Email:
         EmailThread(email).start()
 
 
+# email va codeni olib Email classi orqali emailga jo'natadi
 def send_mail(email, code):
     # render to string orqali activate_account.html fayliga codeni qo'shib html_contentga o'girib beryapti
     html_content = render_to_string(

@@ -41,15 +41,18 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self,validate_data):
         # validatsiyadan o'tgan ma'lumotni olib yangi user yaratib o'zgaruvchiga saqlayapti databasega saqlanmayapti lekin
         user = super(SignupSerializer,self).create(validate_data)
-        print(user)
+        # print(user)
         if user.auth_type==VIA_EMAIL:
             code = user.create_verify_code(verify_type=VIA_EMAIL)
-            print(code)
+            # print(code)
             send_mail(user.email, code)
         elif user.auth_type==VIA_PHONE:
             code = user.create_verify_code(verify_type=VIA_PHONE)
-            send_phone_code(user.phone_number, code)
+            # send_phone_code(user.phone_number, code)
+            send_mail(user.phone_number, code)
         user.save()
+
+        return user
     @staticmethod
     def auth_validate(data):
         # print(data)
@@ -75,7 +78,7 @@ class SignupSerializer(serializers.ModelSerializer):
                 "message": "Invalid Email or Phone Number",
             }
             raise ValidationError(data)
-        print("data", data)
+        # print("data", data)
         '''
         {
             "id": "204ae766-e52d-44bf-ba64-6edaa9b9d89d",
@@ -87,5 +90,23 @@ class SignupSerializer(serializers.ModelSerializer):
         return data
     def validate_email_phone_number(self,value):
         value = value.lower()
-        # to do keyinchalik
+        if value and User.objects.filter(email=value).exists():
+            data = {
+                "success": False,
+                "message": "Bu email allaqachon ishlatilgan",
+            }
+            raise ValidationError(data)
+        elif value and User.objects.filter(phone_number=value).exists():
+            data = {
+                "success": False,
+                "message": "Bu telefon raqami allaqachon ishlatilgan",
+            }
+            raise ValidationError(data)
         return value
+    def to_representation(self, instance):
+        # tokenni ham colsolegan qaytarish uchun funksiya
+        # print(instance)
+        data = super(SignupSerializer, self).to_representation(instance)
+        data.update(instance.token())
+
+        return data

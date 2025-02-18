@@ -49,7 +49,7 @@ class User(AbstractUser,BaseModel):
     # verify_code ya'ni email yoki telefonga yuboriladigan kodni create qilish uchun
     def create_verify_code(self,verify_type):
         #random orqali murakkabroq logika tahlil qil
-        code = "".join([str(random.randint(0,100)%10) for _ in range(6)])
+        code = "".join([str(random.randint(0,100)%10) for _ in range(4)])
         UserConfirmation.objects.create(
             user_id=self.id,
             verify_type = verify_type,
@@ -87,7 +87,7 @@ class User(AbstractUser,BaseModel):
         refresh = RefreshToken.for_user(self)
         return {
             'access': str(refresh.access_token),
-            'refresh': str(refresh),
+            'refresh_token': str(refresh),
         }
     def clean(self):
         self.check_username()
@@ -126,13 +126,12 @@ class UserConfirmation(BaseModel):
     def save(self, *args, **kwargs): # ma'lumotlarni saqlash uchun funksiya
         # agara yangi object bo'lsa , yani databasega hali saqlanmagan bo'lsa , sharti
         # chunki yangi objectga hali pk berilmaydi faqat databasega saqlansa keyin pk beriladi
-        if not self.pk:
-            if self.verify_type == VIA_EMAIL:
-                # EMAIL orqali akkaunt tasdiqlanayotgan bo'lsa ,
-                # kodni yaroqlilik muddatiga 5 daqiqa qo'shyapti
-                self.expiration_time = datetime.now()+timedelta(minutes=EMAIL_EXPIRE)
-            else:
-                # TELEFON orqali akkaunt tasdiqlayotgan bo'lsa ,
-                # kodni yaroqlilik muddatiga 2 minut qo'shyapti
-                self.expiration_time = datetime.now()+timedelta(minutes=PHONE_EXPIRE)
+        if self.verify_type == VIA_EMAIL:
+            # EMAIL orqali akkaunt tasdiqlanayotgan bo'lsa ,
+            # kodni yaroqlilik muddatiga 5 daqiqa qo'shyapti
+            self.expiration_time = datetime.now()+timedelta(minutes=EMAIL_EXPIRE)
+        else:
+            # TELEFON orqali akkaunt tasdiqlayotgan bo'lsa ,
+            # kodni yaroqlilik muddatiga 2 minut qo'shyapti
+            self.expiration_time = datetime.now()+timedelta(minutes=PHONE_EXPIRE)
         super(UserConfirmation, self).save(*args, **kwargs)
