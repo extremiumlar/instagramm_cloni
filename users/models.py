@@ -2,6 +2,7 @@ import hashlib
 import uuid
 from datetime import datetime, timedelta
 import random
+from django.utils.timezone import now
 
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
@@ -118,6 +119,7 @@ class UserConfirmation(BaseModel):
     # user appdagi User modeli bilan onetomany ko'rinishda bog'landi aksincha bog'lash uchun related name ishlatildi
     # models.CASCADE biror user o'chirilda bu modeldagi user ham o'chib ketishi uchun ishlatiladi
     user = models.ForeignKey('users.User', models.CASCADE, related_name='verify_codes')
+
     expiration_time = models.DateTimeField(null=True) # kodni yaroqlilik muddatini tugash vaqti
     is_confirmed = models.BooleanField(default=False) # kodni tasdiqlasa True bo'ladi also False
     def __str__(self):

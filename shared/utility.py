@@ -47,7 +47,7 @@ class Email:
         email = EmailMessage(
             subject=data["subject"],
             body=data["body"],
-            to=[data["to_email"]],
+            to=data["to_email"],
         )
         if data.get('content_type')=='html':
             email.content_subtype = 'html'
@@ -66,7 +66,7 @@ def send_mail(email, code):
     Email.send_email(
         {
             "subject": "Ro'yxatdan o'tish",
-            "to_email": email,
+            "to_email": [email],
             "body": html_content,
             "content_type": "html",
         }

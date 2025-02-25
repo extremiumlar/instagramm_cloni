@@ -1,15 +1,18 @@
 # import datetime
-from datetime import datetime
 
+
+from django.utils.timezone import now
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+# from django.utils.datetime_safe import datetime
+from datetime import datetime
+from shared.utility import send_mail
 from .serializers import SignupSerializer
-from .models import User, CODE_VERIFIED,NEW
+from .models import User, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
 class CreateUserView(CreateAPIView):
@@ -47,4 +50,43 @@ class VerifyAPIView(APIView):
             user.auth_status=CODE_VERIFIED
             user.save()
         return True
+
+class GetNewVerification(APIView):
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        self.check_verification(user)
+        if user.auth_type==VIA_EMAIL:
+            code = user.create_verify_code(VIA_EMAIL)
+            send_mail(user.email, code)
+        elif user.auth_type==VIA_PHONE:
+            code = user.create_verify_code(VIA_PHONE)
+            send_mail(user.phone_number, code)
+        else :
+            data = {
+                "message": "Email yoki telefon raqami noto'g'ri"
+            }
+            raise ValidationError(data)
+        return Response(
+            {
+                "success": True,
+                "message": "Tasdiqlash kodingiz qaytadan jo'natildi"
+            }
+        )
+
+
+    @staticmethod
+    def check_verification(user):
+        verifies = user.verify_codes.filter(expiration_time__gte=datetime.now(),is_confirmed=False)
+        if verifies.exists():
+            data = {
+                "message": "Kodingiz ishlatishga yaroqli iltimos kutib turing ."
+            }
+            raise ValidationError(data)
+
+
+
+
+
+
 
