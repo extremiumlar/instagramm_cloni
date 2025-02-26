@@ -1,17 +1,16 @@
 # import datetime
 
 
-from django.utils.timezone import now
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 # from django.utils.datetime_safe import datetime
 from datetime import datetime
 from shared.utility import send_mail
-from .serializers import SignupSerializer
+from .serializers import SignupSerializer, ChangeUserInformation
 from .models import User, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -52,6 +51,7 @@ class VerifyAPIView(APIView):
         return True
 
 class GetNewVerification(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -84,9 +84,33 @@ class GetNewVerification(APIView):
             }
             raise ValidationError(data)
 
+class ChangeUserInformationView(UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangeUserInformation
+    http_method_names = ['patch','put']
 
+    # qaysi userni change qilishinin bilish uchun funksiya
+    def get_object(self):
+        return self.request.user
 
+    # biz xohlagan ko'rinishda ma'lumot chiqarish uchun update, pertial_update funksiyalari qo'shildi
 
+    def update(self,request,*args,**kwargs):
+        super(ChangeUserInformationView, self).update(request,*args,**kwargs)
+        data = {
+            'success': True,
+            'message': "User updated successfully",
+            'auth_status': request.user.auth_status,
+        }
+        return Response(data, status=200)
+    def partial_update(self,request,*args,**kwargs):
+        super(ChangeUserInformationView, self).partial_update(request,*args,**kwargs)
+        data = {
+            'success': True,
+            'message': "User updated successfully",
+            'auth_status': request.user.auth_status,
+        }
+        return Response(data, status=200)
 
 
 

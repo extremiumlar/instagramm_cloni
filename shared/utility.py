@@ -5,7 +5,7 @@ import phonenumbers
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework.exceptions import ValidationError
-
+from users.models import VIA_EMAIL , VIA_PHONE
 # email to'g'ri kiritilganini tekshirish uchun regax
 email_regax = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
