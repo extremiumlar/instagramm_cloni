@@ -12,6 +12,8 @@ email_regax = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 # telefon raqam to'g'ri kiritilganini tekshirish uchun regax
 phone_regax = re.compile(r"(\+[0-9]+\s*)?(\([0-9]+\))?[\s0-9\-]+[0-9]+")
 
+username_regax = re.compile(r"^[a-zA-Z0-9_.-]+$")
+
 #email yoki phone_number ekanligini tekshirish uchun funksiya
 def check_email_or_phone(email_or_phone):
     phone_number = phonenumbers.parse(email_or_phone)
@@ -71,3 +73,31 @@ def send_mail(email, code):
             "content_type": "html",
         }
     )
+
+def check_user_type(user_input):
+    # phone_number = phonenumbers.parse(user_input)
+    if re.fullmatch(email_regax, user_input):
+        user_input = 'email'
+    elif re.fullmatch(phone_regax, user_input):
+        user_input = 'phone'
+    elif re.fullmatch(username_regax, user_input):
+        user_input = 'username'
+    else:
+        data = {
+            "success": False,
+            "message": "Email, username yoki telefon raqam kiritishingiz kerak ",
+        }
+        raise ValidationError(data)
+    return user_input
+
+
+
+
+
+
+
+
+
+
+
+

@@ -9,8 +9,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 # from django.utils.datetime_safe import datetime
 from datetime import datetime
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from shared.utility import send_mail
-from .serializers import SignupSerializer, ChangeUserInformation
+from .serializers import SignupSerializer, ChangeUserInformation, ChangeUserPhotoSerializer, LoginSerializer
 from .models import User, CODE_VERIFIED, NEW, VIA_EMAIL, VIA_PHONE
 
 
@@ -112,5 +115,18 @@ class ChangeUserInformationView(UpdateAPIView):
         }
         return Response(data, status=200)
 
+class ChangeUserPhotoView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def put(self,request,*args,**kwargs):
+        serializer = ChangeUserPhotoSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            serializer.update(user, serializer.validated_data)
+            return Response({
+                'message': "Rasm muvaffaqiyatli o'zgartirildi "
+            },status=200)
+        return Response(serializer.errors, status=400)
 
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer

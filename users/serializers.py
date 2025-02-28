@@ -1,12 +1,16 @@
+from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from django.db.models.query import ValuesIterable
+from django.core.validators import FileExtensionValidator
+# from django.db.models.query import ValuesIterable
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+# from rest_framework_simplejwt.views import TokenObtainPairView
 
-from shared.utility import check_email_or_phone
-from .models import User, UserConfirmation, VIA_EMAIL , VIA_PHONE, NEW , CODE_VERIFIED , DONE, PHOTO_STEP
-from rest_framework import exceptions
-from django.db.models import Q
+from shared.utility import check_email_or_phone, check_user_type
+from .models import User, UserConfirmation, VIA_EMAIL , VIA_PHONE, NEW , CODE_VERIFIED , DONE, PHOTO_DONE
+# from rest_framework import exceptions
+# from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from shared.utility import send_mail
 
 
@@ -203,6 +207,86 @@ class ChangeUserInformation(serializers.Serializer):
         instance.save()
         return instance
 
+class ChangeUserPhotoSerializer(serializers.Serializer):
+    photo = serializers.ImageField(
+        validators=[FileExtensionValidator(allowed_extensions=[
+            "jpg", "jpeg", "png", 'heic', 'heif'
+        ])],
+    )
+    def update(self,instance,validated_data):
+        photo = validated_data.get('photo')
+        if photo:
+            instance.photo = photo
+            instance.auth_status = PHOTO_DONE
+            instance.save()
+        return instance
+
+class LoginSerializer(TokenObtainPairSerializer):
+
+    def __init__(self,*args,**kwargs):
+        super(LoginSerializer,self).__init__(*args,**kwargs)
+        self.fields['userinput'] = serializers.CharField(required=True)
+        self.fields['username'] = serializers.CharField(required=False, read_only=True)
+    def auth_validate(self,data):
+        user_input = data.get('userinput')
+        if check_user_type(user_input)=='username':
+            username = user_input
+        elif check_user_type(user_input)=='email':
+            user = self.get_user(email=user_input)
+            username = user.username
+        elif check_user_type(user_input)=='phone':
+            user = self.get_user(phone=user_input)
+            username = user.username
+        else :
+            data = {
+                "success": False,
+                'message': "Siz email, username yoki telefon raqam kiritishingiz kerak "
+            }
+            raise ValidationError(data)
+        authentication_kwargs = {
+            self.username_field: username,
+            'password': data['password'],
+        }
+
+        current_user = self.User.objects.filter(username=username)
+        if current_user is not None and current_user.auth_status in [CODE_VERIFIED, NEW]:
+            raise ValidationError(
+                {
+                    "success": False,
+                    "message": "Siz ro'yxatdan to'liq o'tmagansiz !"
+                }
+            )
+
+        user = authenticate(**authentication_kwargs)
+        if user is not None:
+            self.user = user
+        else :
+            raise ValidationError(
+                {
+                    "success": False,
+                    "message": "Kechirasiz login yoki parol xato . Iltimos tekshirib qaytadan kring !"
+                }
+            )
+
+    def validate(self,data):
+        self.auth_validate(data)
+        if self.user.auth_status not in [DONE, PHOTO_DONE]:
+            raise PermissionDenied("Siz login qila olmaysiz , ruxstatingiz yo'q ")
+        data = self.user.token()
+        data['auth_status']=self.user.auth_status
+        data['full_name']=self.user.full_name
+        return data
 
 
 
+
+
+    def get_user(self, **kwargs):
+        users = User.objects.filter(**kwargs)
+        if not users.exists():
+            raise ValidationError(
+                {
+                    "message": "Foydalanuvchi topilmadi "
+                }
+            )
+        return users.first()
