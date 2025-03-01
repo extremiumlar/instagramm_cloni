@@ -1,8 +1,12 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import FileExtensionValidator
+from rest_framework.generics import get_object_or_404
 # from django.db.models.query import ValuesIterable
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import AccessToken
+
 # from rest_framework_simplejwt.views import TokenObtainPairView
 
 from shared.utility import check_email_or_phone, check_user_type
@@ -248,7 +252,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             'password': data['password'],
         }
 
-        current_user = self.User.objects.filter(username=username)
+        current_user = User.objects.filter(username=username).first()
         if current_user is not None and current_user.auth_status in [CODE_VERIFIED, NEW]:
             raise ValidationError(
                 {
@@ -258,6 +262,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             )
 
         user = authenticate(**authentication_kwargs)
+        # print(**authentication_kwargs)
         if user is not None:
             self.user = user
         else :
@@ -290,3 +295,28 @@ class LoginSerializer(TokenObtainPairSerializer):
                 }
             )
         return users.first()
+
+class LoginRefreshSerializer(TokenRefreshSerializer):
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        access_token_instance = AccessToken(data['access'])
+        user_id = access_token_instance['user_id']
+        user = get_object_or_404(User, id = user_id)
+        update_last_login(None, user)
+        return data
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+
+
+
+
+
+
+
+
+
+
+
