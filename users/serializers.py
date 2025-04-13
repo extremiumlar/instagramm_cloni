@@ -63,13 +63,15 @@ class SignupSerializer(serializers.ModelSerializer):
             # send_phone_code(user.phone_number, code)
             send_mail(user.phone_number, code)
         user.save()
-
         return user
     @staticmethod
     def auth_validate(data):
+        # print(data.get('email'))
+        # None qiymat qaytdi
         # print(data)
         # postman orqali jo'natilagan email_phone_number o'zgaruvchisini user_inputga biriktiramiz
         user_input = str(data.get('email_phone_number')).lower()
+        print(user_input) # kiritilgan email yoki phone qiymatini qaytardi
         # check_email_or_phone funksiyasi bor tekshirish uchun ,
         input_type = check_email_or_phone(user_input)
         # print(user_input)
@@ -84,11 +86,7 @@ class SignupSerializer(serializers.ModelSerializer):
                 "phone_number": user_input,
                 "auth_type": VIA_PHONE,
             }
-        else :
-            data = {
-                "success": False,
-                "message": "Invalid Email or Phone Number",
-            }
+
             raise ValidationError(data)
         # print("data", data)
         '''

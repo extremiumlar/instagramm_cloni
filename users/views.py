@@ -105,7 +105,7 @@ class ChangeUserInformationView(UpdateAPIView):
         data = {
             'success': True,
             'message': "User updated successfully",
-            'auth_status': request.user.auth_status,
+            'auth_status1': request.user.auth_status,
         }
         return Response(data, status=200)
     def partial_update(self,request,*args,**kwargs):
@@ -113,7 +113,7 @@ class ChangeUserInformationView(UpdateAPIView):
         data = {
             'success': True,
             'message': "User updated successfully",
-            'auth_status': request.user.auth_status,
+            'auth_status2': request.user.auth_status,
         }
         return Response(data, status=200)
 

@@ -16,15 +16,16 @@ username_regax = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 #email yoki phone_number ekanligini tekshirish uchun funksiya
 def check_email_or_phone(email_or_phone):
-    phone_number = phonenumbers.parse(email_or_phone)
+    # phone_number = phonenumbers.parse(email_or_phone)
     if re.fullmatch(email_regax, email_or_phone):
         email_or_phone = "email"
-    elif phonenumbers.is_valid_number(phone_number):
+    # elif phonenumbers.is_valid_number(phone_number):
+    elif re.fullmatch(phone_regax, email_or_phone):
         email_or_phone = "phone"
     else:
         data = {
             "success": False,
-            "message": "Invalid Email or Phone Number",
+            "message": "Email yoki telefon raqam xato kiritildi .",
         }
         raise ValidationError(data)
 
@@ -89,15 +90,3 @@ def check_user_type(user_input):
         }
         raise ValidationError(data)
     return user_input
-
-
-
-
-
-
-
-
-
-
-
-
