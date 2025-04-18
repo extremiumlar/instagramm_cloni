@@ -2,13 +2,14 @@ from django.urls import path
 
 from postlar.views import PostListAPIView, PostCreateView, PostRetrieveUpdateDestroyAPIView, PostCommentListView, \
     PostCommentCreateView, PostCommentListCreateView, PostLikeListView, CommentRetrieveAPIView, CommentLikeAPIView, \
-    CommentLikeListAPIView, CommentLikeCreateAPIView, CommentLikeDeleteAPIView
+    CommentLikeListAPIView, CommentLikeCreateAPIView, CommentLikeDeleteAPIView, PostLikeAPIView
 
 urlpatterns = [
     path('list/', PostListAPIView.as_view()),
     path('create/', PostCreateView.as_view()),
     path('<uuid:pk>/', PostRetrieveUpdateDestroyAPIView.as_view()),
     path('<uuid:pk>/likes/', PostLikeListView.as_view()),
+    path('<uuid:pk>/like/', PostLikeAPIView.as_view()),
     path('<uuid:pk>/comments/', PostCommentListView.as_view()),
     path('<uuid:pk>/comments/create/', PostCommentCreateView.as_view()),
     path('comments/', PostCommentListCreateView.as_view()),

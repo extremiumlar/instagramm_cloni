@@ -178,7 +178,7 @@ class ForgotPasswordView(APIView):
         },status=200
         )
 
-class ResetPassworView(UpdateAPIView):
+class ResetPasswordView(UpdateAPIView):
     serializer_class = ResetPasswordSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['patch','put']
@@ -186,7 +186,7 @@ class ResetPassworView(UpdateAPIView):
     def get_object(self):
         return self.request.user
     def update(self,request,*args,**kwargs):
-        response = super(ResetPassworView, self).update(request,*args,**kwargs)
+        response = super(ResetPasswordView, self).update(request,*args,**kwargs)
         try:
             user= User.objects.get(id=response.data.get('id'))
         except ObjectDoesNotExist as e:

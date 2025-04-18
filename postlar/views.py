@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Posts, PostLike , PostComments, CommentLike
 
@@ -87,6 +88,36 @@ class PostLikeListView(generics.ListAPIView):
         queryset = PostLike.objects.filter(post_id = post_id)
         return queryset
 
+# like bosish va o'chirish uchun optimal kod :
+class PostLikeAPIView(APIView):
+    permission_classes = [IsAuthenticated, ]
+
+    def post(self, request, *args, **kwargs):
+        post_id = self.kwargs['pk']
+
+        try :
+            like = PostLike.objects.get(post_id=post_id, author=self.request.user)
+            like.delete()
+            return Response({
+                "success": True,
+                "kod": status.HTTP_204_NO_CONTENT,
+                "message": "Post successfully deleted",
+            })
+        except PostLike.DoesNotExist:
+            like = PostLike.objects.create(
+                post_id=post_id,
+                author=self.request.user,
+            )
+            data = PostLikeSerializer(like).data
+            return Response({
+                "success": True,
+                "kod": status.HTTP_200_OK,
+                "message": "Post successfully created",
+                "data":data
+            })
+
+
+
 class CommentRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = CommentSerializer
     permission_classes = [AllowAny, ]
@@ -105,6 +136,10 @@ class CommentLikeListAPIView(generics.ListAPIView):
     serializer_class = CommentLikeSerializer
     permission_classes = [AllowAny, ]
     queryset = CommentLike.objects.all()
+
+
+# Komentlarga like bosish va qaytarib olish uchun 2 API pasda
+# Optimal emas (ikkalasi bitta apida bo'lsa yaxshiroq )
 
 class CommentLikeCreateAPIView(generics.CreateAPIView):
     serializer_class  = CommentLikeSerializer
